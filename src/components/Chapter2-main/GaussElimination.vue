@@ -1,0 +1,268 @@
+<template>
+    <div class="container">
+        <!-- Input Section -->
+        <div id="box-1">
+            <div id="box-left">
+                <!-- Section Title -->
+                <div id="box-11">
+                    <h3>Gauss's Elimination Method</h3>
+                    <label>Number of Variables (n):</label>
+                    <input type="number" v-model.number="numVariables" min="2" max="4" @change="initializeMatrices" />
+                </div>
+
+                <!-- Coefficient Matrix Section -->
+                <div id="box-12" v-if="numVariables > 0">
+                    <h4>Coefficient Matrix (A)</h4>
+                    <div class="matrix-grid" :style="{ gridTemplateColumns: `repeat(${numVariables}, 1fr)` }">
+                        <div v-for="(row, rowIndex) in matrixA" :key="'row-' + rowIndex">
+                            <div v-for="(value, colIndex) in row" :key="'col-' + colIndex" class="matrix-cell">
+                                <input type="number" v-model.number="matrixA[rowIndex][colIndex]" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Constant Vector Section -->
+            <div id="box-right">
+                <div id="box-13" v-if="numVariables > 0">
+                    <h4>Constant Vector (B)</h4>
+                    <div class="vector-section">
+                        <div v-for="(value, index) in vectorB" :key="'b-' + index" class="vector-cell">
+                            <input type="number" v-model.number="vectorB[index]" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Buttons Section -->
+            <div id="box-last">
+                <div id="box-14">
+                    <button @click="randomizeMatrices">Randomize Test Data</button>
+                    <button @click="calculateGaussElimination">Calculate</button>
+                </div>
+                <!-- Output Section -->
+                <div id="box-2" v-if="solutions.length > 0">
+                    <h4>Solutions:</h4>
+                    <ul>
+                        <li v-for="(solution, index) in solutions" :key="'solution-' + index">
+                            x{{ index + 1 }} = {{ solution }}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+export default {
+    name: "GaussElimination",
+    data() {
+        return {
+            numVariables: 2,
+            matrixA: [],
+            vectorB: [],
+            solutions: []
+        };
+    },
+    created() {
+        this.initializeMatrices();
+    },
+    methods: {
+        initializeMatrices() {
+            this.matrixA = Array.from({ length: this.numVariables }, () =>
+                Array(this.numVariables).fill(0)
+            );
+            this.vectorB = Array(this.numVariables).fill(0);
+        },
+        randomizeMatrices() {
+            this.matrixA = this.matrixA.map(row => row.map(() => (Math.random() * 20 - 10).toFixed(2)));
+            this.vectorB = this.vectorB.map(() => (Math.random() * 20 - 10).toFixed(2));
+        },
+        calculateGaussElimination() {
+            try {
+                const augmentedMatrix = this.matrixA.map((row, index) => [...row, parseFloat(this.vectorB[index])]);
+                const n = this.numVariables;
+
+                for (let i = 0; i < n; i++) {
+                    let maxRow = i;
+                    for (let k = i + 1; k < n; k++) {
+                        if (Math.abs(augmentedMatrix[k][i]) > Math.abs(augmentedMatrix[maxRow][i])) {
+                            maxRow = k;
+                        }
+                    }
+
+                    [augmentedMatrix[i], augmentedMatrix[maxRow]] = [augmentedMatrix[maxRow], augmentedMatrix[i]];
+
+                    for (let k = i + 1; k < n; k++) {
+                        const factor = augmentedMatrix[k][i] / augmentedMatrix[i][i];
+                        for (let j = i; j <= n; j++) {
+                            augmentedMatrix[k][j] -= factor * augmentedMatrix[i][j];
+                        }
+                    }
+                }
+
+                this.solutions = Array(n).fill(0);
+                for (let i = n - 1; i >= 0; i--) {
+                    let sum = augmentedMatrix[i][n];
+                    for (let j = i + 1; j < n; j++) {
+                        sum -= augmentedMatrix[i][j] * this.solutions[j];
+                    }
+                    this.solutions[i] = (sum / augmentedMatrix[i][i]).toFixed(6);
+                }
+            } catch (error) {
+                console.error("Error calculating Gauss's Elimination:", error);
+                alert("An error occurred while calculating the solutions. Please check your inputs.");
+            }
+        }
+    }
+};
+</script>
+
+<style scoped>
+body {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+input {
+    width: 80px;
+    height: 30px;
+    margin: 5px;
+}
+
+label {
+    font-size: 20px;
+    margin-bottom: 5px;
+}
+
+button {
+    width: 150px;
+    height: 35px;
+    margin-top: 15px;
+}
+
+.container {
+    position: relative;
+    top: 20px;
+    width: 1300px;
+    height: 460px;
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    overflow: auto;
+}
+
+#box-1 {
+    position: relative;
+    top: 0;
+    margin-top: 40px;
+    width: 1200px;
+    height: 650px;
+    background-color: #FEFBF6;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 20px;
+    border-radius: 8px;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow-y: auto;
+}
+
+#box-left {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+#box-right {
+    display: flex;
+    flex-direction: column;
+}
+
+#box-last {
+    display: flex;
+    flex-direction: column;
+}
+
+#box-11 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+#box-12 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    width: 600px;
+}
+
+.matrix-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 10px;
+}
+
+.matrix-cell {
+    border: 1px solid #ccc;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.vector-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.vector-cell {
+    border: 1px solid #ccc;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+#box-13 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+#box-14 {
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    background-color: #f7fef6;
+    padding: 10px;
+    border-radius: 8px;
+    z-index: 10;
+}
+
+#box-2 {
+    width: 200px;
+    height: 200px;
+    background-color: #3cff00;
+    border-radius: 10px;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 18px;
+}
+
+h3,
+h4 {
+    text-align: center;
+}
+</style>
